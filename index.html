@@ -1048,6 +1048,37 @@
       animation: spin 0.7s linear infinite;
     }
 
+    .delete-row-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.38rem 0.85rem;
+      background: transparent;
+      color: #dc2626;
+      border: 1.5px solid rgba(220, 38, 38, 0.45);
+      border-radius: 8px;
+      font-family: var(--font-header);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+
+    .delete-row-btn:hover {
+      background: #dc2626;
+      color: #fff;
+      border-color: #dc2626;
+      transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(220,38,38,0.35);
+    }
+
+    .delete-row-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     /* Footer Credits */
     footer {
       margin-top: auto;
@@ -1555,7 +1586,7 @@
           <td><input class="inline-input" data-field="product" value="${esc(product)}" placeholder="商品名稱" style="min-width:130px;"></td>
           <td><input class="inline-input" data-field="genre" value="${esc(genre)}" placeholder="分類" style="min-width:100px;"></td>
           <td><input class="inline-input" data-field="price" type="number" value="${price}" min="0" style="min-width:80px;"></td>
-          <td>
+          <td style="display:flex; gap:0.45rem; align-items:center; flex-wrap:nowrap; min-width:180px;">
             <button class="save-row-btn" onclick="saveInlineEdit('${esc(orderId)}', '${rowId}', this)">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
@@ -1564,6 +1595,16 @@
               </svg>
               儲存
             </button>
+            <button class="delete-row-btn" onclick="deleteOrder('${esc(orderId)}', '${rowId}', this)">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6l-1 14H6L5 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+                <path d="M9 6V4h6v2"></path>
+              </svg>
+              刪除
+            </button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -1571,6 +1612,57 @@
 
       wrap.appendChild(table);
       ordersListContainer.appendChild(wrap);
+    }
+
+    // Delete order via DELETE webhook
+    async function deleteOrder(orderId, rowId, btn) {
+      if (!orderId) return;
+
+      if (!confirm(`確定要刪除訂單 ${orderId} 嗎？此操作無法復原。`)) return;
+
+      btn.disabled = true;
+      btn.innerHTML = `<div class="saving-spinner" style="border-color:rgba(220,38,38,0.3);border-top-color:#dc2626;"></div> 刪除中...`;
+
+      try {
+        const deleteUrl = new URL('https://4b07kpia.roamerhost.com/webhook-test/6ff78a4d-f1c4-4c59-9a01-c1a33be0dc1e');
+        deleteUrl.searchParams.append('order_id', orderId);
+
+        const response = await fetch(deleteUrl.toString(), {
+          method: 'DELETE',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+
+
+        // Remove the row from the table with a fade-out animation
+        const row = document.getElementById(rowId);
+        if (row) {
+          row.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(20px)';
+          setTimeout(() => row.remove(), 420);
+        }
+        showToast(`訂單 ${orderId} 已刪除！`);
+
+      } catch (err) {
+        console.error('Delete error:', err);
+        showToast('刪除失敗：' + err.message, true);
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14H6L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+            <path d="M9 6V4h6v2"></path>
+          </svg>
+          刪除
+        `;
+      }
     }
 
     // Save inline-edited row via POST webhook
