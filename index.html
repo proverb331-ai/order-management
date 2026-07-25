@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>會員訂單查詢系統 | Member Order Portal</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    /* CSS variables defining the Design System */
+    :root {
+      --font-primary: 'Inter', sans-serif;
+      --font-header: 'Outfit', sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+
+      /* Beige Theme Variables (Default) */
+      --bg-app: #f7f3ed;
+      --bg-glow: radial-gradient(circle at 50% -20%, rgba(217, 119, 6, 0.12) 0%, rgba(180, 83, 9, 0.04) 50%, transparent 100%);
+      --bg-card: rgba(255, 252, 247, 0.88);
+      --bg-card-hover: rgba(255, 255, 255, 0.98);
+      --border-color: rgba(214, 203, 187, 0.6);
+      --border-color-focus: rgba(180, 83, 9, 0.5);
+      --text-main: #3d3429;
+      --text-secondary: #786955;
+      --text-muted: #a39582;
+      
+      --accent-gradient: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+      --accent-color: #b45309;
+      --accent-color-rgb: 180, 83, 9;
+
+      /* UI States */
+      --success: #059669;
+      --success-bg: rgba(5, 150, 105, 0.1);
+      --warning: #d97706;
+      --warning-bg: rgba(217, 119, 6, 0.1);
+      --info: #0284c7;
+      --info-bg: rgba(2, 132, 199, 0.1);
+      
+      /* Categories colors (Warm Theme) */
+      --cat-3c-text: #1d4ed8;
+      --cat-3c-bg: rgba(29, 78, 216, 0.08);
+      --cat-home-text: #047857;
+      --cat-home-bg: rgba(4, 120, 87, 0.08);
+      --cat-wear-text: #be185d;
+      --cat-wear-bg: rgba(190, 24, 93, 0.08);
+      --cat-camp-text: #c2410c;
+      --cat-camp-bg: rgba(194, 65, 12, 0.08);
+      --cat-other-text: #6d28d9;
+      --cat-other-bg: rgba(109, 40, 217, 0.08);
+
+      --shadow-sm: 0 2px 10px rgba(120, 105, 85, 0.06);
+      --shadow-md: 0 8px 30px rgba(120, 105, 85, 0.1);
+      --shadow-lg: 0 16px 40px rgba(120, 105, 85, 0.15);
+      --glass-blur: blur(16px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    body {
+      font-family: var(--font-primary);
+      background-color: var(--bg-app);
+      background-image: var(--bg-glow);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+    }
+
+    /* Container */
+    .container {
+      width: 100%;
+      max-width: 850px;
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: var(--glass-blur);
+      box-shadow: var(--shadow-sm);
+      z-index: 100;
+    }
+    
+    .theme-toggle:hover {
+      transform: scale(1.05);
+      border-color: var(--border-color-focus);
+    }
+    
+    .theme-toggle svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+    
+    .theme-toggle .sun-icon {
+      display: none;
+    }
+    .light-theme .theme-toggle .sun-icon {
+      display: block;
+    }
+    .light-theme .theme-toggle .moon-icon {
+      display: none;
+    }
+
+    /* Header Styling */
+    header {
+      text-align: center;
+      margin-bottom: 0.5rem;
+      animation: fadeInDown 0.8s ease;
+    }
+
+    header h1 {
+      font-family: var(--font-header);
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.5rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    header p {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    /* Main Card (Search) */
+    .search-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2rem;
+      backdrop-filter: var(--glass-blur);
+      box-shadow: var(--shadow-md);
+      animation: fadeInUp 0.8s ease;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .input-wrapper input {
+      flex: 1;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.9rem 1.2rem;
+      color: var(--text-main);
+      font-family: var(--font-primary);
+      font-size: 1.05rem;
+      outline: none;
+      box-shadow: inset 0 2px 4px rgba(120, 105, 85, 0.04);
+    }
+
+    .input-wrapper input:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15);
+    }
+
+    .search-btn {
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem 1.8rem;
+      font-family: var(--font-header);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .search-btn::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(rgba(255, 255, 255, 0.15), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    .search-btn:hover::after {
+      opacity: 1;
+    }
+
+    .search-btn:active {
+      transform: translateY(1px);
+    }
+
+    /* Quick Links / Demo IDs */
+    .quick-search {
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .quick-search span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .quick-badge {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px dashed rgba(99, 102, 241, 0.3);
+      color: var(--accent-color);
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-family: var(--font-code);
+      cursor: pointer;
+    }
+
+    .quick-badge:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-style: solid;
+      transform: translateY(-1px);
+    }
+
+    /* States Containers */
+    .state-container {
+      display: none; /* Controlled by JS */
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 3rem 2rem;
+      text-align: center;
+      backdrop-filter: var(--glass-blur);
+      box-shadow: var(--shadow-md);
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .state-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .intro-icon {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--accent-color);
+    }
+
+    .loading-icon {
+      border: 4px solid rgba(99, 102, 241, 0.1);
+      border-left-color: var(--accent-color);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      animation: spin 1s linear infinite;
+    }
+
+    .empty-icon {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .error-icon {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+
+    .state-container h3 {
+      font-family: var(--font-header);
+      font-size: 1.25rem;
+      color: var(--text-main);
+    }
+
+    .state-container p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      max-width: 400px;
+    }
+
+    /* Skeleton Loading State */
+    .skeleton-card {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .skeleton-block {
+      background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.03) 25%, 
+        rgba(255, 255, 255, 0.08) 50%, 
+        rgba(255, 255, 255, 0.03) 75%
+      );
+      background-size: 200% 100%;
+      animation: skeletonPulse 1.5s infinite;
+      border-radius: 8px;
+    }
+
+    .light-theme .skeleton-block {
+      background: linear-gradient(90deg, 
+        rgba(0, 0, 0, 0.03) 25%, 
+        rgba(0, 0, 0, 0.06) 50%, 
+        rgba(0, 0, 0, 0.03) 75%
+      );
+      background-size: 200% 100%;
+    }
+
+    /* Results Layout */
+    .results-wrapper {
+      display: none; /* Controlled by JS */
+      flex-direction: column;
+      gap: 1.5rem;
+      animation: fadeIn 0.6s ease;
+    }
+
+    /* Profile / Summary Card */
+    .profile-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.75rem;
+      backdrop-filter: var(--glass-blur);
+      box-shadow: var(--shadow-md);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media(min-width: 600px) {
+      .profile-card {
+        grid-template-columns: 2fr 3fr;
+        align-items: center;
+      }
+    }
+
+    .profile-info {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--font-header);
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .profile-meta h2 {
+      font-family: var(--font-header);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .profile-meta .id-badge {
+      display: inline-block;
+      margin-top: 0.25rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+      font-family: var(--font-code);
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .stat-item {
+      background: rgba(0, 0, 0, 0.15);
+      border: 1px solid var(--border-color);
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .light-theme .stat-item {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .stat-val {
+      font-family: var(--font-header);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-val.highlight {
+      color: var(--accent-color);
+    }
+
+    .stat-lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Orders Section Title */
+    .section-title {
+      font-family: var(--font-header);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Order Cards */
+    .order-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .order-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-color-focus);
+      background: var(--bg-card-hover);
+      box-shadow: var(--shadow-md);
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed var(--border-color);
+      padding-bottom: 0.75rem;
+    }
+
+    .order-id-block {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .order-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .order-id {
+      font-family: var(--font-code);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .order-id:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+
+    .row-num {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.1);
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+    }
+
+    .order-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .product-title {
+      font-family: var(--font-header);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .order-meta-info {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    /* Custom Category Badges */
+    .cat-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .cat-3c { color: var(--cat-3c-text); background: var(--cat-3c-bg); border: 1px solid rgba(96, 165, 250, 0.2); }
+    .cat-home { color: var(--cat-home-text); background: var(--cat-home-bg); border: 1px solid rgba(52, 211, 153, 0.2); }
+    .cat-wear { color: var(--cat-wear-text); background: var(--cat-wear-bg); border: 1px solid rgba(244, 114, 182, 0.2); }
+    .cat-camp { color: var(--cat-camp-text); background: var(--cat-camp-bg); border: 1px solid rgba(251, 146, 60, 0.2); }
+    .cat-other { color: var(--cat-other-text); background: var(--cat-other-bg); border: 1px solid rgba(167, 139, 250, 0.2); }
+
+    .price-tag {
+      font-family: var(--font-header);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+    }
+
+    .price-symbol {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-right: 0.15rem;
+    }
+
+    /* Approval Status */
+    .approval-block {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .approval-lbl {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .approval-status {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.35rem 0.75rem;
+      border-radius: 8px;
+    }
+
+    .approval-status.warning {
+      color: var(--warning);
+      background: var(--warning-bg);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .approval-status.success {
+      color: var(--success);
+      background: var(--success-bg);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .edit-order-btn {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--accent-color);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 0.35rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s ease;
+    }
+
+    .edit-order-btn:hover {
+      background: var(--accent-color);
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transform: translateY(150%);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .toast.show {
+      transform: translateY(0);
+    }
+
+    /* Keyframes */
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes skeletonPulse {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--bg-card);
+      padding: 0.4rem;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      backdrop-filter: var(--glass-blur);
+    }
+
+    .nav-tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-header);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .nav-tab:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-tab.active {
+      background: var(--accent-gradient);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Create Form Specifics */
+    .create-form-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .create-form-header h2 {
+      font-family: var(--font-header);
+      font-size: 1.35rem;
+      color: var(--text-main);
+      margin-bottom: 0.25rem;
+    }
+
+    .create-form-header p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (min-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .form-group.full-width {
+        grid-column: span 2;
+      }
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      color: var(--text-main);
+      font-family: var(--font-primary);
+      font-size: 0.95rem;
+      outline: none;
+      box-shadow: inset 0 2px 4px rgba(120, 105, 85, 0.04);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-group select option {
+      background: #ffffff;
+      color: var(--text-main);
+    }
+
+    .form-group select option {
+      background: var(--bg-app);
+      color: var(--text-main);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem;
+      font-family: var(--font-header);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Result Card Styles */
+    .result-success-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 20px;
+      padding: 1.5rem;
+      backdrop-filter: var(--glass-blur);
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.1);
+    }
+
+    .result-success-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .success-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .result-success-header h3 {
+      font-family: var(--font-header);
+      font-size: 1.2rem;
+      color: var(--text-main);
+    }
+
+    .result-success-header p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .create-result-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* ── Inline-edit table ── */
+    .orders-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      margin-top: 0.5rem;
+    }
+
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .orders-table thead tr {
+      background: linear-gradient(135deg, rgba(180,83,9,0.10) 0%, rgba(217,119,6,0.06) 100%);
+    }
+
+    .orders-table th {
+      padding: 0.75rem 0.8rem;
+      text-align: left;
+      font-family: var(--font-header);
+      font-weight: 600;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      color: var(--accent-color);
+      white-space: nowrap;
+      border-bottom: 2px solid rgba(180,83,9,0.18);
+    }
+
+    .orders-table tbody tr {
+      transition: background 0.18s ease;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .orders-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .orders-table tbody tr:hover {
+      background: rgba(180,83,9,0.04);
+    }
+
+    .orders-table td {
+      padding: 0.6rem 0.8rem;
+      vertical-align: middle;
+      color: var(--text-main);
+    }
+
+    .order-id-cell {
+      font-family: var(--font-code);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .copy-id-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 2px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+    }
+
+    .copy-id-btn:hover { color: var(--accent-color); }
+
+    .inline-input {
+      width: 100%;
+      min-width: 80px;
+      padding: 0.35rem 0.55rem;
+      border: 1.5px solid var(--border-color);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--text-main);
+      font-family: var(--font-primary);
+      font-size: 0.85rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-sizing: border-box;
+    }
+
+    .inline-input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(180,83,9,0.12);
+    }
+
+    .inline-select {
+      width: 100%;
+      min-width: 120px;
+      padding: 0.35rem 0.55rem;
+      border: 1.5px solid var(--border-color);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--text-main);
+      font-family: var(--font-primary);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .inline-select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(180,83,9,0.12);
+    }
+
+    .save-row-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.38rem 0.85rem;
+      background: var(--accent-gradient);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-header);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s;
+      box-shadow: 0 3px 10px rgba(180,83,9,0.25);
+    }
+
+    .save-row-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 14px rgba(180,83,9,0.35);
+    }
+
+    .save-row-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .saving-spinner {
+      width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* Footer Credits */
+    footer {
+      margin-top: auto;
+      padding-top: 3rem;
+      padding-bottom: 1rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Theme Toggle -->
+  <button class="theme-toggle" id="themeToggleBtn" aria-label="切換主題">
+    <svg class="moon-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    <svg class="sun-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+  </button>
+
+  <div class="container">
+    
+    <!-- Title / Logo Header -->
+    <header>
+      <h1>會員訂單管理 Portal</h1>
+      <p>即時查詢會員訂單紀錄，並可直接新增或更新會員與訂單資料</p>
+    </header>
+
+    <!-- Section 1: Create / Update Form Card -->
+    <div class="search-card">
+      <div class="create-form-header">
+        <h2 style="display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          新增 / 更新會員訂單資料 (Append or Update)
+        </h2>
+        <p>填寫資料送出後將同步至系統，若訂單 ID 重複則進行覆蓋更新，否則自動新增。</p>
+      </div>
+
+      <form id="createForm" onsubmit="handleCreateOrder(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="createUserId">會員 ID (User ID)</label>
+            <input type="text" id="createUserId" placeholder="e.g. M2026333" required>
+          </div>
+          <div class="form-group">
+            <label for="createName">會員姓名 (Name)</label>
+            <input type="text" id="createName" placeholder="e.g. Postman" required>
+          </div>
+          <div class="form-group">
+            <label for="createOrderId">訂單 ID (Order ID)</label>
+            <input type="text" id="createOrderId" placeholder="e.g. ORD2026102" required>
+          </div>
+          <div class="form-group">
+            <label for="createGenre">商品分類 (Genre)</label>
+            <select id="createGenre" required>
+              <option value="3C 數位家電">3C 數位家電</option>
+              <option value="居家生活">居家生活</option>
+              <option value="服飾鞋包">服飾鞋包</option>
+              <option value="戶外露營">戶外露營</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label for="createProduct">購買商品 (Product)</label>
+            <input type="text" id="createProduct" placeholder="e.g. 藍牙降噪耳機" required>
+          </div>
+          <div class="form-group full-width">
+            <label for="createPrice">購買金額 NTD (Price)</label>
+            <input type="number" id="createPrice" placeholder="e.g. 8800" min="0" step="1" required>
+          </div>
+        </div>
+        
+        <button type="submit" class="submit-btn" id="createSubmitBtn">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          <span>儲存並更新訂單</span>
+        </button>
+      </form>
+
+      <!-- Create Result Alert -->
+      <div id="createResultContainer" style="display: none; margin-top: 1.5rem;" class="fadeIn">
+        <div class="result-success-card">
+          <div class="result-success-header">
+            <div class="success-icon">
+              <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path d="M20 6L9 17l-5-5"></path>
+              </svg>
+            </div>
+            <div>
+              <h3>會員資料儲存成功！</h3>
+              <p>系統已接收並成功同步：</p>
+            </div>
+          </div>
+          <div id="createResultList" class="create-result-cards"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Order Query Card -->
+    <div class="search-card">
+      <div class="create-form-header" style="margin-bottom: 1rem;">
+        <h2 style="display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          查詢會員訂單紀錄
+        </h2>
+        <p>輸入會員編號即可向系統查詢目前累積的全部訂單與審核狀態。</p>
+      </div>
+
+      <form id="queryForm" onsubmit="handleQuery(event)">
+        <div class="form-group">
+          <label for="userIdInput">會員編號 (User ID) <span style="font-weight: normal; opacity: 0.7; font-size: 0.8rem;">（留空則查詢全部訂單）</span></label>
+          <div class="input-wrapper">
+            <input 
+              type="text" 
+              id="userIdInput" 
+              placeholder="e.g., M2026001 (留空可查詢所有會員訂單)" 
+              autocomplete="off" 
+            >
+            <button type="submit" class="search-btn">
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span>查詢</span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Quick Clicks -->
+      <div class="quick-search">
+        <span>快捷操作：</span>
+        <button class="quick-badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-color); font-weight: 600;" onclick="fillAndSearch('')">🔍 查詢全部訂單</button>
+        <button class="quick-badge" onclick="fillAndSearch('M2026001')">M2026001</button>
+        <button class="quick-badge" onclick="fillAndSearch('M2026002')">M2026002</button>
+        <button class="quick-badge" onclick="fillAndSearch('M2026003')">M2026003</button>
+      </div>
+    </div>
+
+    <!-- Query States & Results Container -->
+    <div id="queryStatusArea">
+      <!-- Intro State (Default) -->
+      <div id="introState" class="state-container" style="display: flex;">
+        <div class="state-icon intro-icon">
+          <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+        </div>
+        <h3>準備好開始查詢</h3>
+        <p>請在上方輸入欄填寫會員 ID，點擊查詢以獲取詳細的商品購買資料與訂單進度。</p>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="state-container">
+        <div class="loading-icon"></div>
+        <h3>正在獲取資料...</h3>
+        <p>我們正在向 n8n Webhook 服務器發送請求並獲取最新訂單數據。</p>
+        <div class="skeleton-card" style="width: 100%; margin-top: 1.5rem;">
+          <div class="skeleton-block" style="height: 50px; width: 100%; margin-bottom: 0.5rem;"></div>
+          <div class="skeleton-block" style="height: 120px; width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="state-container">
+        <div class="state-icon empty-icon">
+          <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h3>無此會員訂單記錄</h3>
+        <p id="emptyMessage">未找到與該會員 ID 相關聯的訂單。請確認 ID 輸入正確。</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="errorState" class="state-container">
+        <div class="state-icon error-icon">
+          <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+        </div>
+        <h3>伺服器連接錯誤</h3>
+        <p id="errorMessage">無法完成請求。請檢查您的網絡連線，或 n8n 伺服器是否正常運行。</p>
+        <button class="quick-badge" style="margin-top: 0.5rem; padding: 0.4rem 1rem;" onclick="retryQuery()">重新嘗試</button>
+      </div>
+
+      <!-- Results Display -->
+      <div id="resultsWrapper" class="results-wrapper">
+        <div class="profile-card">
+          <div class="profile-info">
+            <div class="avatar" id="avatarInitial">陳</div>
+            <div class="profile-meta">
+              <h2 id="profileName">陳冠宇</h2>
+              <div class="id-badge" id="profileId">M2026001</div>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-val highlight" id="statCount">1</div>
+              <div class="stat-lbl">購買訂單數</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-val" id="statAmount">NT$ 8,990</div>
+              <div class="stat-lbl">總購買金額</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+            </svg>
+            <span>訂單明細</span>
+          </div>
+          <div id="ordersList" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast Element -->
+  <div id="toast" class="toast">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M20 6L9 17l-5-5"></path>
+    </svg>
+    <span id="toastMsg">已複製編號到剪貼簿</span>
+  </div>
+
+  <!-- Footer Credits -->
+  <footer>
+    <p>&copy; 2026 會員資料管理系統. Powered by n8n Workflows.</p>
+  </footer>
+
+  <script>
+    // Theme toggle Logic
+    const htmlEl = document.documentElement;
+    const themeBtn = document.getElementById('themeToggleBtn');
+    
+    // Check saved preference or system theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      htmlEl.className = savedTheme;
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      htmlEl.className = prefersDark ? '' : 'light-theme';
+    }
+
+    themeBtn.addEventListener('click', () => {
+      if (htmlEl.classList.contains('light-theme')) {
+        htmlEl.classList.remove('light-theme');
+        localStorage.setItem('theme', '');
+      } else {
+        htmlEl.classList.add('light-theme');
+        localStorage.setItem('theme', 'light-theme');
+      }
+    });
+
+    // Helper for category badge styling
+    function getCategoryClass(category) {
+      if (!category) return 'cat-other';
+      const cat = category.toString().toLowerCase();
+      if (cat.includes('3c') || cat.includes('數位') || cat.includes('電競')) {
+        return 'cat-3c';
+      } else if (cat.includes('居家') || cat.includes('辦公') || cat.includes('生活')) {
+        return 'cat-home';
+      } else if (cat.includes('服飾') || cat.includes('鞋') || cat.includes('穿戴')) {
+        return 'cat-wear';
+      } else if (cat.includes('戶外') || cat.includes('露營') || cat.includes('車用')) {
+        return 'cat-camp';
+      }
+      return 'cat-other';
+    }
+
+    // Number formatting helper
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('zh-TW', {
+        style: 'currency',
+        currency: 'TWD',
+        minimumFractionDigits: 0
+      }).format(amount).replace('TWD', 'NT$');
+    }
+
+    // Quick-clicks
+    function fillAndSearch(id) {
+      document.getElementById('userIdInput').value = id;
+      // Trigger query
+      document.getElementById('queryForm').dispatchEvent(new Event('submit'));
+    }
+
+    // Last requested ID for retry
+    let lastQueryId = '';
+    
+    function retryQuery() {
+      if (lastQueryId) {
+        document.getElementById('userIdInput').value = lastQueryId;
+        document.getElementById('queryForm').dispatchEvent(new Event('submit'));
+      }
+    }
+
+    // Clipboard feature
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`已複製訂單編號 ${text}`);
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    // Dynamic state renderer
+    function showState(state) {
+      const states = ['introState', 'loadingState', 'emptyState', 'errorState', 'resultsWrapper'];
+      states.forEach(s => {
+        const el = document.getElementById(s);
+        if (s === state) {
+          el.style.display = (s === 'resultsWrapper') ? 'flex' : 'flex';
+        } else {
+          el.style.display = 'none';
+        }
+      });
+    }
+
+    // Query Submission Handler
+    async function handleQuery(event) {
+      if (event) event.preventDefault();
+      
+      const userIdVal = document.getElementById('userIdInput').value.trim();
+
+      lastQueryId = userIdVal;
+      showState('loadingState');
+
+      try {
+        // Build URL for GET request to n8n webhook
+        const webhookUrl = new URL('https://4b07kpia.roamerhost.com/webhook/7d528328-aa55-4b22-b8b0-2a9c718eb3cb');
+        if (userIdVal) {
+          webhookUrl.searchParams.append('user_id', userIdVal);
+        }
+
+        const response = await fetch(webhookUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Safely read raw text first to avoid crash on empty/non-JSON body
+        const rawText = await response.text();
+
+        if (!rawText || rawText.trim() === '') {
+          document.getElementById('emptyMessage').innerHTML =
+            `Webhook 回傳了空白回應（HTTP ${response.status}）。<br>
+             請至 n8n 確認工作流程是否已啟用（Active）。`;
+          showState('emptyState');
+          return;
+        }
+
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (parseErr) {
+          throw new Error(`伺服器回傳非 JSON 格式：${rawText.substring(0, 120)}`);
+        }
+
+        // n8n may return array, or wrap in { body/data/result/rows }
+        let orders = [];
+        if (Array.isArray(data)) {
+          orders = data;
+        } else if (data && typeof data === 'object') {
+          const inner = data.body || data.data || data.result || data.rows || data.orders;
+          if (Array.isArray(inner)) {
+            orders = inner;
+          } else {
+            orders = [data];
+          }
+        }
+
+        // Filter out null/empty items
+        orders = orders.filter(o => o && typeof o === 'object' && Object.keys(o).length > 0);
+
+        if (orders.length === 0) {
+          document.getElementById('emptyMessage').innerHTML = userIdVal
+            ? `未找到與會員 ID <strong>"${userIdVal}"</strong> 相關聯的訂單。請確認 ID 輸入正確。`
+            : `目前系統中尚無任何訂單資料。`;
+          showState('emptyState');
+          return;
+        }
+
+        renderResults(orders, userIdVal);
+        showState('resultsWrapper');
+
+      } catch (error) {
+        console.error('Fetch error:', error);
+        document.getElementById('errorMessage').innerHTML = `無法連接到查詢服務。這可能是由於網路連線問題，或是跨來源資源共享 (CORS) 安全限制。<br><br><small>詳細錯誤：${error.message}</small>`;
+        showState('errorState');
+      }
+    }
+
+    // Render results as an inline-editable table
+    function renderResults(orders, queryUserId) {
+      // Helper: safely escape value for use inside HTML attribute
+      const esc = (v) => String(v ?? '').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      const primaryRecord = orders[0];
+      const memberName = String(primaryRecord['姓名'] ?? '未知會員');
+
+      // Update Profile Details
+      document.getElementById('profileName').textContent = queryUserId ? memberName : '全部會員';
+      document.getElementById('profileId').textContent = queryUserId || '所有帳號';
+      document.getElementById('avatarInitial').textContent = queryUserId ? memberName.charAt(0) : '全';
+
+      // Aggregates
+      const orderCount = orders.length;
+      let totalAmount = 0;
+      orders.forEach(o => {
+        totalAmount += parseFloat(o['購買金額 (NTD)'] ?? 0) || 0;
+      });
+      document.getElementById('statCount').textContent = orderCount;
+      document.getElementById('statAmount').textContent = formatCurrency(totalAmount);
+
+      const ordersListContainer = document.getElementById('ordersList');
+      ordersListContainer.innerHTML = '';
+      ordersListContainer.style.display = 'block';
+
+      // Build table
+      const wrap = document.createElement('div');
+      wrap.className = 'orders-table-wrap';
+
+      const table = document.createElement('table');
+      table.className = 'orders-table';
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>訂單 ID</th>
+            <th>會員 ID</th>
+            <th>姓名</th>
+            <th>購買商品</th>
+            <th>分類</th>
+            <th>金額 (NTD)</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="ordersTableBody"></tbody>
+      `;
+
+      const tbody = table.querySelector('#ordersTableBody');
+
+      orders.forEach((order, idx) => {
+        // --- Read exactly the API field names ---
+        const orderId = String(order['訂單 ID'] ?? '');
+        const userId  = String(order['會員 ID'] ?? '');
+        const name    = String(order['姓名'] ?? '');
+        const product = String(order['購買商品'] ?? '');
+        const genre   = String(order['分類'] ?? '');
+        const price   = parseFloat(order['購買金額 (NTD)'] ?? 0) || 0;
+
+        const rowId = `row_${idx}`;
+
+        const tr = document.createElement('tr');
+        tr.id = rowId;
+        tr.innerHTML = `
+          <td>
+            <div class="order-id-cell">
+              <span>${esc(orderId)}</span>
+              <button class="copy-id-btn" title="複製訂單 ID" onclick="copyToClipboard('${esc(orderId)}')">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+          <td><input class="inline-input" data-field="user_id" value="${esc(userId)}" placeholder="會員 ID"></td>
+          <td><input class="inline-input" data-field="name" value="${esc(name)}" placeholder="姓名" style="min-width:70px;"></td>
+          <td><input class="inline-input" data-field="product" value="${esc(product)}" placeholder="商品名稱" style="min-width:130px;"></td>
+          <td><input class="inline-input" data-field="genre" value="${esc(genre)}" placeholder="分類" style="min-width:100px;"></td>
+          <td><input class="inline-input" data-field="price" type="number" value="${price}" min="0" style="min-width:80px;"></td>
+          <td>
+            <button class="save-row-btn" onclick="saveInlineEdit('${esc(orderId)}', '${rowId}', this)">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              儲存
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      wrap.appendChild(table);
+      ordersListContainer.appendChild(wrap);
+    }
+
+    // Save inline-edited row via POST webhook
+    async function saveInlineEdit(orderId, rowId, btn) {
+      const row = document.getElementById(rowId);
+      if (!row) return;
+
+      const getValue = (field) => {
+        const el = row.querySelector(`[data-field="${field}"]`);
+        return el ? el.value.trim() : '';
+      };
+
+      const user_id = getValue('user_id');
+      const name    = getValue('name');
+      const product = getValue('product');
+      const genre   = getValue('genre');
+      const price   = getValue('price');
+
+      if (!orderId || !user_id || !name || !product || !genre || !price) {
+        showToast('請填寫所有欄位後再儲存', true);
+        return;
+      }
+
+      // Show saving state
+      btn.disabled = true;
+      btn.innerHTML = `<div class="saving-spinner"></div> 儲存中...`;
+
+      try {
+        const postUrl = 'https://4b07kpia.roamerhost.com/webhook/a143f271-3564-4ca1-b526-e9e0dbe62dd3';
+        const formData = new URLSearchParams();
+        formData.append('order_id', orderId);
+        formData.append('user_id', user_id);
+        formData.append('name', name);
+        formData.append('product', product);
+        formData.append('genre', genre);
+        formData.append('price', price);
+
+        const response = await fetch(postUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+          },
+          body: formData
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        // Highlight row on success
+        row.style.transition = 'background 0.4s';
+        row.style.background = 'rgba(5,150,105,0.08)';
+        setTimeout(() => { row.style.background = ''; }, 1800);
+        showToast(`訂單 ${orderId} 已更新！`);
+
+      } catch (err) {
+        console.error('Save error:', err);
+        showToast('儲存失敗：' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          儲存
+        `;
+      }
+    }
+    // Handle Create Order Form Submission
+    async function handleCreateOrder(event) {
+      event.preventDefault();
+      
+      const submitBtn = document.getElementById('createSubmitBtn');
+      const resultContainer = document.getElementById('createResultContainer');
+      const resultList = document.getElementById('createResultList');
+
+      const order_id = document.getElementById('createOrderId').value.trim();
+      const user_id = document.getElementById('createUserId').value.trim();
+      const name = document.getElementById('createName').value.trim();
+      const product = document.getElementById('createProduct').value.trim();
+      const genre = document.getElementById('createGenre').value;
+      const price = document.getElementById('createPrice').value.trim();
+
+      // UI Loading state
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <div class="loading-icon" style="width: 18px; height: 18px; border-width: 2px;"></div>
+        <span>儲存中...</span>
+      `;
+
+      try {
+        // Production Webhook URL
+        const postUrl = 'https://4b07kpia.roamerhost.com/webhook/a143f271-3564-4ca1-b526-e9e0dbe62dd3';
+        
+        // Prepare x-www-form-urlencoded payload matching Postman sample
+        const formData = new URLSearchParams();
+        formData.append('order_id', order_id);
+        formData.append('user_id', user_id);
+        formData.append('name', name);
+        formData.append('product', product);
+        formData.append('genre', genre);
+        formData.append('price', price);
+
+        const response = await fetch(postUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Render response data nicely
+        let items = Array.isArray(data) ? data : [data];
+        resultList.innerHTML = '';
+
+        items.forEach(item => {
+          const catClass = getCategoryClass(item['分類'] || item['genre'] || genre);
+          const rawPrice = item['購買金額 (NTD)'] || item['購買金額'] || item['price'] || price;
+          const displayPrice = parseFloat(rawPrice) || 0;
+
+          const card = document.createElement('div');
+          card.className = 'order-card';
+          card.innerHTML = `
+            <div class="order-header">
+              <div class="order-id-block">
+                <span class="order-tag">新增訂單號：</span>
+                <button class="order-id" title="點擊複製" onclick="copyToClipboard('${item['訂單 ID'] || item['order_id'] || order_id}')">
+                  <span>${item['訂單 ID'] || item['order_id'] || order_id}</span>
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                </button>
+              </div>
+              <span class="row-num">會員: ${item['姓名'] || item['name'] || name} (${item['會員 ID'] || item['user_id'] || user_id})</span>
+            </div>
+            <div class="order-body">
+              <div class="product-title">${item['購買商品'] || item['product'] || product}</div>
+              <div class="order-meta-info">
+                <span class="cat-badge ${catClass}">${item['分類'] || item['genre'] || genre}</span>
+                <div class="price-tag">
+                  <span class="price-symbol">NT$</span>
+                  <span>${displayPrice.toLocaleString('zh-TW')}</span>
+                </div>
+              </div>
+            </div>
+          `;
+          resultList.appendChild(card);
+        });
+
+        resultContainer.style.display = 'block';
+        showToast('訂單新增成功！');
+
+      } catch (error) {
+        console.error('Create error:', error);
+        alert('新增失敗：' + error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M5 12h14M12 5l7 7-7 7"></path>
+          </svg>
+          <span>送出並新增訂單</span>
+        `;
+      }
+    }
+
+    // Auto-load all orders on page open
+    document.addEventListener('DOMContentLoaded', () => {
+      fillAndSearch('');
+    });
+  </script>
+</body>
+</html>
